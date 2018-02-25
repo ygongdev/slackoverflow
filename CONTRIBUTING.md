@@ -18,7 +18,9 @@ There are bugs littered everywhere in this project
   * There can definitely be some bugs in `slackoverflow`. I would look specifically in the function `parse_events`, where we handle all the events.
     
 ## New Feature Requirements
-To request a feature, please create an issue on github.
+To request a new feature, please create an issue on github.
+
+To add a new feature, please make an issue or use an existing issue and make a PR addressing that specific issue.
 
 ## Style Guide / Coding conventions 
 There are no strict styling policy as long as it is readable. 
