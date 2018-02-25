@@ -17,7 +17,6 @@ web_scraper = StackoverflowWebScraper()
 RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
 CHARACTER_LIMIT = 200  # character limit for the response.
 
-
 def reply_thread(thread_ts, channel, response):
     title, link, text = response
     slack_client.api_call(
@@ -34,23 +33,20 @@ def reply_thread(thread_ts, channel, response):
         thread_ts=thread_ts
     )
 
-# def post_to_channel(channel, text):
-#     slack_client.api_call(
-#         "chat.postMessage",
-#         channel=channel,
-#         attachments= [
-#             {
-#                 "title": "slackoverflow", # TODO: change pretext and title lol
-#                 "pretext": "Adam",
-#                 "text": text,
-#                 "mrkdwn_in": ["text"]
-#             }
-#         ]
-#     )
-
-# OPTIONAL: Need to be able to reply to the parent's thread ts.
-# OPTIONAL: Add reactions to indicate progress and completeness.
-
+def post_to_channel(channel, response):
+    title, link, text = response
+    slack_client.api_call(
+        "chat.postMessage",
+        channel=channel,
+        attachments= [
+            {
+                "title": title,
+                "pretext": link,
+                "text": text,
+                "mrkdwn_in": ["text"]
+            }
+        ]
+    )
 
 def parse_events(slack_events):
     for event in slack_events:
@@ -64,15 +60,13 @@ def parse_events(slack_events):
             if "text" in event:
                 message = event["text"]
                 # If DMing bot
-                # if event["channel"][0] == "D":
-                #     response = generate_answer(message, True)
-                #     print(response)
-                #     post_to_channel(event["channel"], response)
+                if event["channel"][0] == "D":
+                    response = generate_answer(message, True)
+                    post_to_channel(event["channel"], response)
                 # If mentioning bot
-                if bot_id in message:
+                elif bot_id in message:
                     message = message.replace("<@{0}>".format(bot_id), "")
                     response = generate_answer(message, False)
-                    print(response)
                     reply_thread(event["ts"], event["channel"], response)
 
 
