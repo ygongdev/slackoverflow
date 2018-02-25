@@ -21,7 +21,7 @@ Head over to http://adamhe.me/slack-bots/ and click on the `Add to Slack` button
 7. Run the bot via `python slackoverflow.py` and have fun developing!
 
 ## Contributor Guide
-[CONTRIBUTING.md](https://github.com/ygong10/slackoverflow/blob/master/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/ygongdev/slackoverflow/blob/master/CONTRIBUTING.md)
 
 ## License 
-[MIT License](https://github.com/ygong10/slackoverflow/blob/master/LICENSE.md)
+[MIT License](https://github.com/ygongdev/slackoverflow/blob/master/LICENSE.md)
