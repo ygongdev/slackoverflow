@@ -21,7 +21,14 @@ def reply_thread(thread_ts, channel, text):
     slack_client.api_call(
         "chat.postMessage",
         channel=channel,
-        text=text,
+        attachments=[
+            {
+                "title": "slackoverflow", # TODO: change pretext and title lol
+                "pretext": "Adam",
+                "text": text,
+                "mrkdwn_in": ["text"]
+            }
+        ],
         thread_ts=thread_ts
     )
 
@@ -29,13 +36,21 @@ def post_to_channel(channel, text):
     slack_client.api_call(
         "chat.postMessage",
         channel=channel,
-        text=text,
+        attachments= [
+            {
+                "title": "slackoverflow", # TODO: change pretext and title lol
+                "pretext": "Adam",
+                "text": text,
+                "mrkdwn_in": ["text"]
+            }
+        ]
     )
 
 # OPTIONAL: Need to be able to reply to the parent's thread ts.
 # OPTIONAL: Add reactions to indicate progress and completeness. 
 def parse_events(slack_events):
     for event in slack_events:
+        # TODO: Make sure that we at least take care of the obvious edge cases.
         if event["type"] == "message":
             if "subtype" in event:
                 # Ignore bot messages
@@ -43,16 +58,28 @@ def parse_events(slack_events):
                     return
 
             if "text" in event:
-                message = event['text']
+                message = event["text"]
                 # If DMing bot
                 if event["channel"][0] == "D":
                     response = generate_answer(message, True)
+                    print(response)
                     post_to_channel(event["channel"], response)
                 # If mentioning bot
                 if bot_id in message:
                     message = message.replace("<@{0}>".format(bot_id), "")
                     response = generate_answer(message, False)
+                    print(response)
                     reply_thread(event["ts"], event["channel"], response)
+
+def html_markdown(text):
+    text = text.replace('<p>', '').replace('</p>', '')
+    text = text.replace('<b>', '*').replace('</b>', '*')
+    text = text.replace('<code>', '`').replace('</code>', '`')
+    text = text.replace('<pre>', '```').replace('</pre>', '```')
+    text = text.replace('<em>', '_').replace('</em>', '_')
+    text = text.replace('<strong>', '*').replace('</strong>', '*')
+    text = text.replace('````', '```')
+    return text
 
 def generate_answer(message, dm=False):
     char_limit = CHARACTER_LIMIT * 3 if dm else CHARACTER_LIMIT
@@ -63,7 +90,7 @@ def generate_answer(message, dm=False):
         response = "*Question:* {0}\n*Link*: {1}\n*Answer*:\n```{2}```".format(
             question["title"],
             question["link"],
-            "{0}{1}".format(answer["body"][:char_limit], "...\nGo to link for more info.") if len(answer["body"]) > char_limit else answer["body"]
+            html_markdown(answer["body"])
         )
     return response
 
