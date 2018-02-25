@@ -3,6 +3,7 @@ import time
 from slackclient import SlackClient
 import requests
 import subprocess
+from htmlslacker import HTMLSlacker
 
 # instantiate Slack client
 slack_client = SlackClient("xoxb-320320014259-SzaOtWuXgvp5ZZa2eNIUhyag")
@@ -16,9 +17,28 @@ def reply_thread(thread_ts, channel, text):
     slack_client.api_call(
         "chat.postMessage",
         channel=channel,
-        text=text,
+        attachments={
+            "attachments": [
+                {
+                    "title": "slackoverflow",
+                    "pretext": "Adam",
+                    "text": text,
+                    "mrkdwn_in": ["text"]
+                }
+            ]
+        },
         thread_ts=thread_ts
     )
+
+def html_mrkdwn(text):
+    text = text.replace('<p>', '').replace('</p>', '')
+    text = text.replace('<b>', '*').replace('</b>', '*')
+    text = text.replace('<code>', '`').replace('</code>', '`')
+    text = text.replace('<pre>', '```').replace('</pre>', '```')
+    text = text.replace('<em>', '_').replace('</em>', '_')
+    text = text.replace('<strong>', '*').replace('</strong>', '*')
+    text = text.replace('````', '```')
+    return text
 
 def parse_events(slack_events):
     for event in slack_events:
