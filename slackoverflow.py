@@ -3,11 +3,15 @@ import time
 from slackclient import SlackClient
 import requests
 import subprocess
+from webScraper import StackoverflowWebScraper
 
 # instantiate Slack client
 slack_client = SlackClient("xoxb-320320014259-SzaOtWuXgvp5ZZa2eNIUhyag")
 # starterbot's user ID in Slack: value is assigned after the bot starts up
 bot_id = None
+
+# instantiate scraper
+web_scraper = StackoverflowWebScraper()
 
 # constants
 RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
@@ -23,10 +27,18 @@ def reply_thread(thread_ts, channel, text):
 def parse_events(slack_events):
     for event in slack_events:
         if event['type'] == 'message':
+          
             message = event['text']
             if bot_id in message:
-                message = ' '.join(message.split(' ')[1:])
-                print(message) # Do something with the message
+                message = message.replace("<@{0}>".format(bot_id), "")
+                question = web_scraper.get_top_question(message)
+                answer = web_scraper.get_top_answer(question["question_id"])
+                response = "Question: {0}\nLink: {1}\nAnswer:\n```{2}```".format(
+                  question["title"],
+                  question["link"],
+                  answer["body"][:100]
+                )
+                reply_thread(event["ts"], event["channel"], response)
 
 
 if __name__ == "__main__":
