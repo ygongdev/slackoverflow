@@ -15,6 +15,7 @@ web_scraper = StackoverflowWebScraper()
 
 # constants
 RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
+CHARACTER_LIMIT = 200 # character limit for the response.
 
 def reply_thread(thread_ts, channel, text):
     slack_client.api_call(
@@ -24,22 +25,47 @@ def reply_thread(thread_ts, channel, text):
         thread_ts=thread_ts
     )
 
+def post_to_channel(channel, text):
+    slack_client.api_call(
+        "chat.postMessage",
+        channel=channel,
+        text=text,
+    )
+
+# OPTIONAL: Need to be able to reply to the parent's thread ts.
+# OPTIONAL: Add reactions to indicate progress and completeness. 
 def parse_events(slack_events):
     for event in slack_events:
-        if event['type'] == 'message':
-          
-            message = event['text']
-            if bot_id in message:
-                message = message.replace("<@{0}>".format(bot_id), "")
-                question = web_scraper.get_top_question(message)
-                answer = web_scraper.get_top_answer(question["question_id"])
-                response = "Question: {0}\nLink: {1}\nAnswer:\n```{2}```".format(
-                  question["title"],
-                  question["link"],
-                  answer["body"][:100]
-                )
-                reply_thread(event["ts"], event["channel"], response)
+        if event["type"] == "message":
+            if "subtype" in event:
+                # Ignore bot messages
+                if event["subtype"] == "bot_message":
+                    return
 
+            if "text" in event:
+                message = event['text']
+                # If DMing bot
+                if event["channel"][0] == "D":
+                    response = generate_answer(message, True)
+                    post_to_channel(event["channel"], response)
+                # If mentioning bot
+                if bot_id in message:
+                    message = message.replace("<@{0}>".format(bot_id), "")
+                    response = generate_answer(message, False)
+                    reply_thread(event["ts"], event["channel"], response)
+
+def generate_answer(message, dm=False):
+    char_limit = CHARACTER_LIMIT * 3 if dm else CHARACTER_LIMIT
+    question = web_scraper.get_top_question(message)
+    response = "Couldn't find a matching question on stackoverflow. Try rephrasing your question."
+    if question is not None:
+        answer = web_scraper.get_top_answer(question["question_id"])
+        response = "*Question:* {0}\n*Link*: {1}\n*Answer*:\n```{2}```".format(
+            question["title"],
+            question["link"],
+            "{0}{1}".format(answer["body"][:char_limit], "...\nGo to link for more info.") if len(answer["body"]) > char_limit else answer["body"]
+        )
+    return response
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
