@@ -15,16 +15,18 @@ web_scraper = StackoverflowWebScraper()
 
 # constants
 RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
-CHARACTER_LIMIT = 200 # character limit for the response.
+CHARACTER_LIMIT = 200  # character limit for the response.
 
-def reply_thread(thread_ts, channel, text):
+
+def reply_thread(thread_ts, channel, response):
+    title, link, text = response
     slack_client.api_call(
         "chat.postMessage",
         channel=channel,
         attachments=[
             {
-                "title": "slackoverflow", # TODO: change pretext and title lol
-                "pretext": "Adam",
+                "title": title,
+                "pretext": link,
                 "text": text,
                 "mrkdwn_in": ["text"]
             }
@@ -32,22 +34,24 @@ def reply_thread(thread_ts, channel, text):
         thread_ts=thread_ts
     )
 
-def post_to_channel(channel, text):
-    slack_client.api_call(
-        "chat.postMessage",
-        channel=channel,
-        attachments= [
-            {
-                "title": "slackoverflow", # TODO: change pretext and title lol
-                "pretext": "Adam",
-                "text": text,
-                "mrkdwn_in": ["text"]
-            }
-        ]
-    )
+# def post_to_channel(channel, text):
+#     slack_client.api_call(
+#         "chat.postMessage",
+#         channel=channel,
+#         attachments= [
+#             {
+#                 "title": "slackoverflow", # TODO: change pretext and title lol
+#                 "pretext": "Adam",
+#                 "text": text,
+#                 "mrkdwn_in": ["text"]
+#             }
+#         ]
+#     )
 
 # OPTIONAL: Need to be able to reply to the parent's thread ts.
-# OPTIONAL: Add reactions to indicate progress and completeness. 
+# OPTIONAL: Add reactions to indicate progress and completeness.
+
+
 def parse_events(slack_events):
     for event in slack_events:
         # TODO: Make sure that we at least take care of the obvious edge cases.
@@ -60,10 +64,10 @@ def parse_events(slack_events):
             if "text" in event:
                 message = event["text"]
                 # If DMing bot
-                if event["channel"][0] == "D":
-                    response = generate_answer(message, True)
-                    print(response)
-                    post_to_channel(event["channel"], response)
+                # if event["channel"][0] == "D":
+                #     response = generate_answer(message, True)
+                #     print(response)
+                #     post_to_channel(event["channel"], response)
                 # If mentioning bot
                 if bot_id in message:
                     message = message.replace("<@{0}>".format(bot_id), "")
@@ -71,7 +75,8 @@ def parse_events(slack_events):
                     print(response)
                     reply_thread(event["ts"], event["channel"], response)
 
-def html_markdown(text):
+
+def html_mrkdwn(text):
     text = text.replace('<p>', '').replace('</p>', '')
     text = text.replace('<b>', '*').replace('</b>', '*')
     text = text.replace('<code>', '`').replace('</code>', '`')
@@ -81,18 +86,18 @@ def html_markdown(text):
     text = text.replace('````', '```')
     return text
 
+
 def generate_answer(message, dm=False):
     char_limit = CHARACTER_LIMIT * 3 if dm else CHARACTER_LIMIT
     question = web_scraper.get_top_question(message)
-    response = "Couldn't find a matching question on stackoverflow. Try rephrasing your question."
+    response = (
+        "404", "404", "Couldn't find a matching question on stackoverflow. Try rephrasing your question.")
     if question is not None:
         answer = web_scraper.get_top_answer(question["question_id"])
-        response = "*Question:* {0}\n*Link*: {1}\n*Answer*:\n```{2}```".format(
-            question["title"],
-            question["link"],
-            html_markdown(answer["body"])
-        )
+        response = (question["title"], question["link"],
+                    html_mrkdwn(answer["body"]))
     return response
+
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
