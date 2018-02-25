@@ -31,4 +31,4 @@ Don't be a douche?
 Your work will be directly impacting all developers who has integrated slackoverflow into their team!
 
 ## Where can I ask for help?
-You can directly email me at ygongdev@gmail.com for now. When there's more contributors, we'll have an official communication channel.
+Please create an issue on github for now. When there's more contributors, we'll have an official communication channel.
