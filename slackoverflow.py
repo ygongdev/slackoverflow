@@ -6,7 +6,7 @@ import subprocess
 from webScraper import StackoverflowWebScraper
 
 # instantiate Slack client
-slack_client = SlackClient("xoxb-320320014259-SzaOtWuXgvp5ZZa2eNIUhyag")
+slack_client = SlackClient(os.environ["SLACK_API_TOKEN"])
 # starterbot's user ID in Slack: value is assigned after the bot starts up
 bot_id = None
 
